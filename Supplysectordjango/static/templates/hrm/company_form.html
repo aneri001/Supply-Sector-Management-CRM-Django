@@ -1,0 +1,170 @@
+{% extends 'hrm/index.html' %}
+{% block content %}
+{% load filter %}
+{% load static %}
+<form id="cmp_form" data-key="{{pk}}">
+    {% csrf_token %}
+    <div class="text-center">
+        <h4>Company Form</h4>
+    </div>
+   
+
+    <div class="form-group row">
+        <label class="col-sm-3 col-form-label" for="name">Name:</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="name" placeholder="Enter Full Name" required>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-3 col-form-label" for="email">Email Address:</label>
+        <div class="col-sm-9">
+            <input type="email" class="form-control" id="email" placeholder="Email Address" required>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-3 col-form-label" for="address">Address:</label>
+        <div class="col-sm-9">
+            <textarea rows="3" class="form-control" id="address" placeholder="Enter Address"></textarea>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-3 col-form-label" for="mobile">Mobile Number:</label>
+        <div class="col-sm-9">
+            <input type="tel" class="form-control" id="mobile" placeholder="Phone Number">
+        </div>
+    </div>
+    
+    
+    <div class="form-group row">
+        <label class="col-sm-3 col-form-label" for="status">Status:</label>
+        <div class="col-sm-1">
+            <input type="checkbox" class="form-control" id="status" value="True">
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-3 col-form-label" for="type">Company Type:</label>
+        <div class="col-sm-9">
+            <select class="custom-select" id="type">
+                <option value selected>Select Company Type</option>
+                {% for etype in emp_type %}
+                    <option value="{{etype}}">{{etype}}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-3 col-form-label" for="product">Product:</label>
+        <div class="col-sm-9">
+            <select class="custom-select" id="product" multiple>
+                <option value selected>Select Product</option>
+                {% for plist in product_list %}
+                    <option value="{{plist}}">{{plist}}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    
+    <div class="form-group row">
+        <label class="col-sm-3 col-form-label" for="meta_data">Meta Data:</label>
+        <div class="col-sm-9">
+            <textarea rows="3" class="form-control" id="meta_data" placeholder="Enter Json Data"></textarea>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-3 col-form-label" for="production_user">Production User:</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="production_user" placeholder="Enter multiple production user" required>
+        </div>
+    </div>
+    
+    <div class="form-group row">
+        <div class="col-sm-9 offset-sm-3">
+            <input type="submit" id="submit" class="btn btn-primary" value="Submit">
+            <input type="reset" class="btn btn-secondary" value="Reset">
+            <a href="{% url 'company_table'%}" class="btn btn-primary" role="button">Back</a>
+        </div>
+    </div>
+</form>
+<script type="text/javascript">
+    $(document).ready( function () {
+        var pk = $('#emp_form').data("key") || '';
+        if (pk){
+             $.ajax({
+                type: "GET",
+                url: "/emp/"+pk,
+                success:function(response){
+                    $("#name").val(response.name);
+                    if (response.photo){
+                        document.getElementById("photo").src = response.photo;
+                    }
+                    $("#email").val(response.email);
+                    $("#address").val(response.address);
+                    $("#mobile").val(response.mobile);
+                    $("#age").val(response.age);
+                    $("#type").val(response.type);
+                    $("#product").val(response.product);
+                    
+                    $("#meta_data").val(JSON.stringify(response.meta_data));
+                    document.getElementById("status").checked = response.status;
+                }
+             });
+        }
+
+        $('#submit').on('click', (e) => {
+            e.preventDefault();
+            insert();
+        });
+
+        function insert() {
+            var formData = new FormData();
+           
+            formData.append('name', $("#name").val());
+            formData.append('email', $("#email").val());
+            formData.append('address', $("#address").val());
+            formData.append('mobile', $("#mobile").val());
+           
+            formData.append('product', $("#product").val());
+          
+            formData.append('status', document.getElementById("status").value);
+      
+            formData.append('type', $("#type").val());
+            var jdata= $("#meta_data").val();
+            if (jdata.startsWith("\"")){
+                jdata = JSON.parse(jdata);
+            }
+            formData.append('meta_data', jdata);
+           
+           
+            var urls = ''
+            var method = ''
+            if (pk){
+                urls = '/cmp/' + pk + '/'
+                method = 'PUT'
+            }else{
+                urls = '/cmp/'
+                method = 'POST'
+            }
+            $.ajax({
+                url : urls,
+                type : method,
+                enctype : 'multipart/form-data',
+                data : formData,
+                headers : {'X-CSRFToken': '{{csrf_token}}'},
+                dataType : 'json',
+                processData : false,
+                contentType : false,
+                success: function (data) {
+                    console.log(data);
+                    location.reload();
+                },
+                error: function(error){
+                    console.log(error);
+                }
+            });
+        }
+    });
+
+
+</script>
+{% endblock %}
